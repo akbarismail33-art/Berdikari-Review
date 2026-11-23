@@ -346,6 +346,175 @@
         <div class="relative">
           <i class="fa-solid fa-globe text-[#22D3EE] absolute left-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"></i>
           <select id="lang-select" onchange="changeLanguage(this.value)" class="w-full pl-8 pr-8 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-semibold text-white appearance-none focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer">
+            <option value="id" class="bg-[#1E1B4B] text-white">Bahasa Indonhite/10 hover:bg-white/20 text-xs font-semibold flex items-center gap-1.5 border border-white/15">
+      <span id="mobile-api-dot" class="w-2 h-2 rounded-full bg-cyan-400"></span>
+      <span>API Key</span>
+    </button>
+  </header>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/60 z-30 hidden lg:hidden backdrop-blur-xs"></div>
+
+  <!-- Main App Layout -->
+  <div class="min-h-screen flex">
+
+    <!-- Left Sidebar Navigation -->
+    <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-72 sidebar-gradient text-white flex flex-col justify-between transition-transform duration-300 -translate-x-full lg:translate-x-0 shrink-0 shadow-xl">
+      
+      <!-- Brand Header & API Key Config -->
+      <div class="p-5 pb-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#22D3EE] via-sky-500 to-[#6366F1] flex items-center justify-center font-extrabold text-base tracking-tight text-white shadow-lg shadow-cyan-500/20 shrink-0">
+              BR
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-extrabold text-xs tracking-tight leading-tight">BERDIKARI REVIEW</span>
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white shadow-sm">
+                  v1.0
+                </span>
+              </div>
+              <p class="text-[11px] text-indigo-200/90 font-medium leading-snug mt-0.5">AI Storyboard Photo Studio</p>
+            </div>
+          </div>
+          <button type="button" onclick="toggleSidebar()" class="lg:hidden text-indigo-200 hover:text-white p-1.5">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Client-side API Key Status Bar -->
+        <button type="button" onclick="openApiModal()" class="mt-4 w-full px-3 py-2.5 rounded-xl bg-[#161538]/85 hover:bg-[#161538] border border-indigo-400/25 flex items-center justify-between text-xs transition">
+          <span class="flex items-center gap-2 text-indigo-100 font-semibold">
+            <i class="fa-solid fa-key text-[#22D3EE]"></i>
+            <span id="sidebar-api-status">API Bawaan (Siap)</span>
+          </span>
+          <span id="sidebar-api-badge" class="w-2 h-2 rounded-full bg-[#22D3EE]"></span>
+        </button>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="flex-1 overflow-y-auto px-3.5 py-2 space-y-5">
+        
+        <!-- MULAI DI SINI -->
+        <div>
+          <div class="px-3 mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-indigo-200/80">
+            <i class="fa-solid fa-star text-amber-400 text-[10px]"></i>
+            <span data-i18n="secStart">MULAI DI SINI</span>
+          </div>
+          <button type="button" data-tab="panduan" onclick="switchTab('panduan')" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-white/10 text-[#22D3EE] flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-book-open"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="font-semibold text-sm text-white truncate" data-i18n="navGuide">Panduan Aplikasi</span>
+                <span class="w-2 h-2 rounded-full bg-[#22D3EE] shrink-0"></span>
+              </div>
+              <p class="text-[11px] text-indigo-200/80 truncate" data-i18n="navGuideSub">Cara pakai semua fitur</p>
+            </div>
+          </button>
+        </div>
+
+        <!-- MODEL STUDIO -->
+        <div>
+          <div class="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-indigo-200/80">
+            MODEL STUDIO
+          </div>
+          <div class="space-y-1.5">
+            <button type="button" data-tab="ai-influencer" onclick="switchTab('ai-influencer')" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-white/10 text-indigo-200 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-user-astronaut"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm text-white truncate">AI Influencer</div>
+                <p class="text-[11px] text-indigo-200/80 truncate" data-i18n="navAiInfSub">Buat & simpan model AI</p>
+              </div>
+            </button>
+
+            <button type="button" data-tab="influencer-bicara" onclick="switchTab('influencer-bicara')" class="nav-btn active-nav-item w-full text-left px-3 py-2.5 rounded-xl transition flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#22D3EE] to-[#6366F1] text-white flex items-center justify-center shrink-0 shadow">
+                <i class="fa-solid fa-microphone"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm text-white truncate" data-i18n="navTalkInf">Influencer Bicara</div>
+                <p class="text-[11px] text-indigo-100/90 truncate" data-i18n="navTalkInfSub">Konten bicara per niche</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- REVIEW GENERATOR -->
+        <div>
+          <div class="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-indigo-200/80">
+            REVIEW GENERATOR
+          </div>
+          <div class="space-y-1.5">
+            <button type="button" data-tab="review-produk" onclick="switchTab('review-produk')" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-white/10 text-indigo-200 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-box-open"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm text-white truncate">Review Produk</div>
+                <p class="text-[11px] text-indigo-200/80 truncate">Foto review produk afiliasi</p>
+              </div>
+            </button>
+
+            <button type="button" data-tab="review-skincare" onclick="switchTab('review-skincare')" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-white/10 text-indigo-200 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-pump-soap"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm text-white truncate">Review Skincare</div>
+                <p class="text-[11px] text-indigo-200/80 truncate">Scene review skincare</p>
+              </div>
+            </button>
+
+            <button type="button" data-tab="review-fashion" onclick="switchTab('review-fashion')" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-white/10 text-indigo-200 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-shirt"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm text-white truncate">Review Fashion</div>
+                <p class="text-[11px] text-indigo-200/80 truncate">OOTD & fashion story</p>
+              </div>
+            </button>
+
+            <button type="button" data-tab="unboxing-scene" onclick="switchTab('unboxing-scene')" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-white/10 text-indigo-200 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-cubes"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-semibold text-sm text-white truncate">Unboxing Scene</div>
+                <p class="text-[11px] text-indigo-200/80 truncate">Story buka paket produk</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- BANTUAN -->
+        <div>
+          <div class="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-indigo-200/80">
+            BANTUAN
+          </div>
+          <button type="button" data-tab="tutorial" onclick="switchTab('tutorial')" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <i class="fa-brands fa-youtube"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="font-semibold text-sm text-white truncate" data-i18n="navTutorial">Tutorial Aplikasi</div>
+              <p class="text-[11px] text-indigo-200/80 truncate" data-i18n="navTutorialSub">Langkah praktis pakai app ini</p>
+            </div>
+          </button>
+        </div>
+
+      </nav>
+
+      <!-- Sidebar Footer: Language Selector -->
+      <div class="p-4 border-t border-white/10 bg-[#161538]/70 space-y-2.5">
+        <div class="relative">
+          <i class="fa-solid fa-globe text-[#22D3EE] absolute left-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"></i>
+          <select id="lang-select" onchange="changeLanguage(this.value)" class="w-full pl-8 pr-8 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-semibold text-white appearance-none focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer">
             <option value="id" class="bg-[#1E1B4B] text-white">Bahasa Indonesia</option>
             <option value="en" class="bg-[#1E1B4B] text-white">English</option>
           </select>
