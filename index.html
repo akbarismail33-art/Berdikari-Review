@@ -91,7 +91,7 @@
 
         <div class="flex items-center gap-2">
           <button type="button" onclick="resetApiKey()" class="px-3 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
-            Gunakan API Bawaan / Reset
+            Reset
           </button>
           <button type="button" onclick="saveApiKey()" class="px-4 py-2.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition">
             Simpan API Key
@@ -731,7 +731,7 @@
                 </div>
                 <button type="button" id="btn-reanalyze-product" onclick="analyzeProductImagesAuto()" class="hidden px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold items-center gap-1.5 transition">
                   <i class="fa-solid fa-wand-magic-sparkles"></i>
-                  <span>Analisa Ulang Otomatis</span>
+                  <span>Analisa Ulang</span>
                 </button>
               </div>
 
@@ -891,12 +891,16 @@
 
   <script>
     // =========================================================================
-    // CONSTANTS & APPLICATION STATE
+    // CONSTANTS & APPLICATION STATE (GEMINI 3.8 FLASH & 3.1 FLASH IMAGE)
     // =========================================================================
     const STORAGE_KEYS = {
       API_KEY: 'berdikari_review_api_key',
       MODELS: 'berdikari_review_saved_models_v1'
     };
+
+    const TEXT_MODELS_CHAIN = ['gemini-3.8-flash', 'gemini-2.5-flash'];
+    const IMAGE_MODELS_CHAIN = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image'];
+    const IMAGEN_FALLBACK_MODEL = 'imagen-3.0-generate-002';
 
     const MAX_REF_IMAGES = 4;
     const apiKey = ""; // Default runtime pratinjau
@@ -1119,12 +1123,11 @@
       statusMsg.textContent = 'Menghubungkan ke server Gemini API...';
       statusBox.classList.remove('hidden');
 
-      const testModels = ['gemini-3.8-flash', 'gemini-2.5-flash'];
       let connectedModel = null;
       let lastErrorMsg = '';
 
       try {
-        for (const m of testModels) {
+        for (const m of TEXT_MODELS_CHAIN) {
           try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${keyToTest}`;
             const resp = await fetch(url, {
@@ -1611,7 +1614,7 @@
     }
 
     // =========================================================================
-    // GEMINI API ENGINE (ANTI-FAIL TEXT & MULTI-REF IMAGE WITH 3-STEP FALLBACK)
+    // GEMINI API ENGINE (GEMINI 3.8 FLASH & GEMINI 3.1 FLASH IMAGE)
     // =========================================================================
     function extractJsonFromText(rawText) {
       if (!rawText) throw new Error('Respons teks kosong dari AI.');
@@ -1658,7 +1661,6 @@
     // 1. Pemanggilan Teks & Analisa Gambar (gemini-3.8-flash -> gemini-2.5-flash)
     async function callGeminiText(parts) {
       const activeKey = getActiveApiKey();
-      const textModels = ['gemini-3.8-flash', 'gemini-2.5-flash'];
       const normalizedParts = Array.isArray(parts) ? parts : [{ text: String(parts) }];
 
       const payload = {
@@ -1666,7 +1668,7 @@
       };
 
       let lastErr = null;
-      for (const modelName of textModels) {
+      for (const modelName of TEXT_MODELS_CHAIN) {
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${activeKey}`;
           const result = await fetchWithBackoff(url, {
@@ -1688,7 +1690,7 @@
       throw lastErr || new Error('Gagal memproses permintaan teks/analisa Gemini.');
     }
 
-    // 2. Pemanggilan Gambar Multi-Referensi dengan 3-Level Fallback
+    // 2. Pemanggilan Gambar Multi-Referensi (gemini-3.1-flash-image -> gemini-2.5-flash-image -> imagen-3.0-generate-002)
     async function generateSceneImage(promptText, refDataUrls = []) {
       const activeKey = getActiveApiKey();
       const fullPrompt = `${promptText} Vertical 9:16 portrait photography composition, natural realistic lighting, crisp focus, high quality, no text overlay or watermark.`;
@@ -1722,55 +1724,35 @@
 
       let lastErr = null;
 
-      // Attempt A: gemini-3.1-flash-image
-      try {
-        const urlA = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${activeKey}`;
-        const resA = await fetchWithBackoff(urlA, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts }],
-            generationConfig: { responseModalities: ['IMAGE'] }
-          })
-        }, 1);
-        const partsA = resA?.candidates?.[0]?.content?.parts || [];
-        const imgA = partsA.find(p => p.inlineData && p.inlineData.data);
-        if (imgA) {
-          return `data:${imgA.inlineData.mimeType || 'image/png'};base64,${imgA.inlineData.data}`;
-        }
-        throw new Error(partsA.find(p => p.text)?.text || 'gemini-3.1-flash-image tidak mengembalikan gambar.');
-      } catch (errA) {
-        lastErr = errA;
-        const msg = (errA.message || '').toLowerCase();
-        if (msg.includes('api key not valid') || msg.includes('api_key_invalid') || msg.includes('unregistered callers')) {
-          throw new Error(`API Key tidak valid (${errA.message})`);
+      for (const imgModel of IMAGE_MODELS_CHAIN) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${imgModel}:generateContent?key=${activeKey}`;
+          const res = await fetchWithBackoff(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts }],
+              generationConfig: { responseModalities: ['IMAGE'] }
+            })
+          }, 1);
+          const respParts = res?.candidates?.[0]?.content?.parts || [];
+          const imgPart = respParts.find(p => p.inlineData && p.inlineData.data);
+          if (imgPart) {
+            return `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+          }
+          throw new Error(respParts.find(p => p.text)?.text || `${imgModel} tidak mengembalikan gambar.`);
+        } catch (err) {
+          lastErr = err;
+          const msg = (err.message || '').toLowerCase();
+          if (msg.includes('api key not valid') || msg.includes('api_key_invalid') || msg.includes('unregistered callers')) {
+            throw new Error(`API Key tidak valid (${err.message})`);
+          }
         }
       }
 
-      // Attempt B: gemini-2.5-flash-image
+      // Fallback terakhir text-to-image: imagen-3.0-generate-002
       try {
-        const urlB = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${activeKey}`;
-        const resB = await fetchWithBackoff(urlB, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts }],
-            generationConfig: { responseModalities: ['IMAGE'] }
-          })
-        }, 1);
-        const partsB = resB?.candidates?.[0]?.content?.parts || [];
-        const imgB = partsB.find(p => p.inlineData && p.inlineData.data);
-        if (imgB) {
-          return `data:${imgB.inlineData.mimeType || 'image/png'};base64,${imgB.inlineData.data}`;
-        }
-        throw new Error(partsB.find(p => p.text)?.text || 'gemini-2.5-flash-image tidak mengembalikan gambar.');
-      } catch (errB) {
-        lastErr = errB;
-      }
-
-      // Attempt C: imagen-3.0-generate-002 (Fallback terakhir text-to-image)
-      try {
-        const urlC = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${activeKey}`;
+        const urlC = `https://generativelanguage.googleapis.com/v1beta/models/${IMAGEN_FALLBACK_MODEL}:predict?key=${activeKey}`;
         const resC = await fetchWithBackoff(urlC, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1783,7 +1765,7 @@
         if (b64C) {
           return `data:image/png;base64,${b64C}`;
         }
-        throw new Error('imagen-3.0-generate-002 tidak mengembalikan gambar.');
+        throw new Error(`${IMAGEN_FALLBACK_MODEL} tidak mengembalikan gambar.`);
       } catch (errC) {
         lastErr = errC;
       }
